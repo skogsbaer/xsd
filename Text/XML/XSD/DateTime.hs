@@ -109,10 +109,10 @@ seconds :: Maybe String -> String
 seconds (Just d) = '.' : d
 seconds Nothing = []
 
-showi :: (Num a, Ord a) => a -> String
+showi :: (Show a, Num a, Ord a) => a -> String
 showi n = (if n < 10 then ('0':) else id) (show n)
 
-showy :: (Num a, Ord a) => a -> String
+showy :: (Show a, Num a, Ord a) => a -> String
 showy n = let k t = if n < t then ('0':) else id
           in k 1000 (k 100 (k 10 (show n)))
 
@@ -121,7 +121,7 @@ parseOffset = let e = const (Offset False Nothing Nothing Nothing) `fmap` eof
                   z = const (Offset True Nothing Nothing Nothing) `fmap` char 'Z'
                   o = do neg <- fmap (== '-') (char '+' <|> char '-')
                          hh <- p2imax 14
-                         char ':'
+                         _ <- char ':'
                          mm <- p2imax (if hh == 14 then 0 else 59)
                          return (Offset False (Just neg) (Just hh) (Just mm))
               in e <|> z <|> o
@@ -129,15 +129,15 @@ parseOffset = let e = const (Offset False Nothing Nothing Nothing) `fmap` eof
 parseDateTime :: GenParser Char st DateTime
 parseDateTime = do neg <- isJust `fmap` optionMaybe (char '-')
                    yy <- yearParser
-                   char '-'
+                   _ <- char '-'
                    mm <- p2imax 12
-                   char '-'
+                   _ <- char '-'
                    dd <- p2imax ([31, if isLeapYear (fromIntegral mm) then 29 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] !! (mm - 1))
-                   char 'T'
+                   _ <- char 'T'
                    hhh <- p2imax 23
-                   char ':'
+                   _ <- char ':'
                    mmm <- p2imax 59
-                   char ':'
+                   _ <- char ':'
                    sss <- p2imax 59
                    ssss <- optionMaybe fractionalSeconds
                    o <- parseOffset
@@ -154,7 +154,7 @@ yearParser = do d1 <- digit
                   else return (read ([d1, d2, d3, d4] ++ ds))
 
 fractionalSeconds :: GenParser Char st String
-fractionalSeconds = do char '.'
+fractionalSeconds = do _ <- char '.'
                        many1 digit
 
 p2imax :: Int -> GenParser Char st Int
