@@ -132,7 +132,7 @@ parseDateTime = do neg <- isJust `fmap` optionMaybe (char '-')
                    _ <- char '-'
                    mm <- p2imax 12
                    _ <- char '-'
-                   dd <- p2imax ([31, if isLeapYear (fromIntegral mm) then 29 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] !! (mm - 1))
+                   dd <- p2imax ([31, if isLeapYear (fromIntegral yy) then 29 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] !! (mm - 1))
                    _ <- char 'T'
                    hhh <- p2imax 23
                    _ <- char ':'
