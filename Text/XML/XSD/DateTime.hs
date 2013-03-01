@@ -14,6 +14,7 @@ module Text.XML.XSD.DateTime(
                             ) where
 
 import Text.ParserCombinators.Parsec
+import Data.Char
 import Data.Ord
 import Data.Maybe
 import Data.Time
@@ -23,6 +24,18 @@ import Control.Arrow
 
 -- | XSD @dateTime@ data structure <http://www.w3.org/TR/xmlschema-2/#dateTime>
 data DateTime = DateTime Bool Int Int Int Int Int Int (Maybe String) Offset
+
+dateTimeConstr :: Bool
+               -> Int
+               -> Int
+               -> Int
+               -> Int
+               -> Int
+               -> Int
+               -> Maybe [Char]
+               -> Offset
+               -> DateTime
+dateTimeConstr neg yy mm dd hhh mmm sss ssss tz = DateTime neg yy mm dd hhh mmm sss (fmap (filter isDigit) ssss) tz
 
 instance Show DateTime where
   show (DateTime neg yy mm dd hhh mmm sss ssss tz) =
@@ -58,7 +71,7 @@ fromZonedTime (ZonedTime (LocalTime d (TimeOfDay hhh mmm sss)) (TimeZone m _ _))
   let (yy, mm, dd) = toGregorian d
       (sss1, sss2) = properFraction sss
       (hz, mz) = m `quotRem` 60
-  in DateTime (yy < 0) (abs (fromIntegral yy)) mm dd hhh mmm sss1 (Just (trimTail (== '0') (show sss2))) (Offset False (Just (hz < 0)) (Just hz) (Just mz))
+  in dateTimeConstr (yy < 0) (abs (fromIntegral yy)) mm dd hhh mmm sss1 (Just (trimTail (== '0') (drop 2 $ show sss2))) (Offset False (Just (hz < 0)) (Just hz) (Just mz))
 
 -- | Parses the string in a @dateTime@ then converts to a zoned time and may fail with a parse error.
 zonedTime' :: String -> Either ParseError ZonedTime
@@ -78,7 +91,7 @@ fromUTCTime (UTCTime d t) =
   let (yy, mm, dd) = toGregorian d
       TimeOfDay hhh mmm sss = timeToTimeOfDay t
       (sss1, sss2) = properFraction sss
-  in DateTime (yy < 0) (abs (fromIntegral yy)) mm dd hhh mmm sss1 (Just (trimTail (== '0') (show sss2))) (Offset True Nothing Nothing Nothing)
+  in dateTimeConstr (yy < 0) (abs (fromIntegral yy)) mm dd hhh mmm sss1 (Just (trimTail (== '0') (drop 2 $ show sss2))) (Offset True Nothing Nothing Nothing)
 
 -- | Parses the string in a @dateTime@ then converts to a UTC time and may fail with a parse error.
 utcTime' :: String -> Either ParseError UTCTime
@@ -106,7 +119,10 @@ timeZone (Offset False (Just neg) (Just hh) (Just mm)) = TimeZone ((if neg then 
 timeZone _ = error "Offset invariant not met"
 
 seconds :: Maybe String -> String
-seconds (Just d) = '.' : d
+seconds (Just s) =
+    case s of
+      "" -> []
+      _ -> '.' : s
 seconds Nothing = []
 
 showi :: (Show a, Num a, Ord a) => a -> String
@@ -141,7 +157,7 @@ parseDateTime = do neg <- isJust `fmap` optionMaybe (char '-')
                    sss <- p2imax 59
                    ssss <- optionMaybe fractionalSeconds
                    o <- parseOffset
-                   return (DateTime neg yy mm dd hhh mmm sss ssss o)
+                   return (dateTimeConstr neg yy mm dd hhh mmm sss ssss o)
 
 yearParser :: GenParser Char st Int
 yearParser = do d1 <- digit
