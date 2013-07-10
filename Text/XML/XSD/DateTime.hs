@@ -23,7 +23,7 @@ import           Control.Applicative (pure, (<$>), (*>), (<|>))
 import           Control.Monad (when)
 import           Data.Attoparsec.Text (Parser, char, digit)
 import qualified Data.Attoparsec.Text as A
-import           Data.Char (isDigit)
+import           Data.Char (isDigit, ord)
 import           Data.Fixed (Pico, showFixed)
 import           Data.Maybe (maybeToList)
 import           Data.Monoid ((<>))
@@ -226,7 +226,9 @@ secondParser = do d1 <- digit
 p2imax :: Int -> Parser Int
 p2imax m = do a <- digit
               b <- digit
-              let n = read [a, b]
+              let n = 10 * val a + val b
               if n > m
                 then fail $ "value " ++ show n ++ " exceeded maximum " ++ show m
                 else return n
+  where
+    val c = ord c - ord '0'
