@@ -1,5 +1,5 @@
 Name:                xsd
-Version:             0.4.0
+Version:             0.4.0.1
 License:             BSD3
 License-File:        LICENSE
 Synopsis:            XML Schema data structures
@@ -14,8 +14,8 @@ cabal-version:       >= 1.8
 
 Library
   Build-Depends:   base < 5 && >= 4.5
-                 , attoparsec == 0.10.*
-                 , text == 0.11.*
+                 , attoparsec
+                 , text
                  , time >= 1.2.0.3
   GHC-Options:     -Wall
   Exposed-Modules: Text.XML.XSD
